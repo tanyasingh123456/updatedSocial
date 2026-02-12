@@ -15,7 +15,7 @@ const getBaseURL = () => {
   if (import.meta.env.MODE === 'development') {
     return "http://localhost:5000/api";
   }
-  return "https://updatedsocial.onrender.com/api";
+  return "https://updated-social-rrr5.vercel.app/api";
 };
 
 const API = axios.create({
