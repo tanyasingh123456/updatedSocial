@@ -1,8 +1,10 @@
 const mongoose = require("mongoose");
 const dns = require("dns");
 
-let connectAttempt = 0;
-const MAX_RETRIES = 5;
+let cached = global.__MONGOOSE_CONN;
+if (!cached) {
+  cached = global.__MONGOOSE_CONN = { conn: null, promise: null };
+}
 
 const parseDnsServers = () => {
   const raw = process.env.DNS_SERVERS;
@@ -41,9 +43,12 @@ const ensureWorkingDnsForSrv = () => {
 
 const connectDB = async () => {
   try {
-    connectAttempt++;
-    console.log(`[Attempt ${connectAttempt}/${MAX_RETRIES}] Trying to connect to MongoDB...`);
-    console.log("MONGO_URL:", process.env.MONGO_URL ? "✓ Set" : "✗ NOT SET - Check Render environment variables!");
+    if (mongoose.connection.readyState === 1 && cached.conn) {
+      return cached.conn;
+    }
+
+    console.log("Trying to connect to MongoDB...");
+    console.log("MONGO_URL:", process.env.MONGO_URL ? "✓ Set" : "✗ NOT SET");
 
     ensureWorkingDnsForSrv();
 
@@ -51,27 +56,25 @@ const connectDB = async () => {
       throw new Error("MONGO_URL environment variable is not set");
     }
 
-    await mongoose.connect(process.env.MONGO_URL, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      retryWrites: true,
-      w: "majority",
-      family: 4,
-    });
-
-    console.log("✅ MongoDB Connected Successfully!");
-    connectAttempt = 0; // Reset on successful connection
-  } catch (error) {
-    console.error("❌ Database connection failed:");
-    console.error("Error:", error.message);
-
-    if (connectAttempt < MAX_RETRIES) {
-      console.log(`Retrying in 3 seconds... (${connectAttempt}/${MAX_RETRIES})`);
-      setTimeout(connectDB, 3000);
-    } else {
-      console.error("Max retries reached. Exiting...");
-      process.exit(1);
+    if (!cached.promise) {
+      cached.promise = mongoose
+        .connect(process.env.MONGO_URL, {
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+          retryWrites: true,
+          w: "majority",
+          family: 4,
+        })
+        .then((m) => m);
     }
+
+    cached.conn = await cached.promise;
+    console.log("✅ MongoDB Connected Successfully!");
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    console.error("❌ Database connection failed:", error.message);
+    throw error;
   }
 };
 
