@@ -10,8 +10,16 @@ const getUserId = () => {
   return userId;
 };
 
+// Use local backend during development, production Render URL in production
+const getBaseURL = () => {
+  if (import.meta.env.MODE === 'development') {
+    return "http://localhost:5000/api";
+  }
+  return "https://updatedsocial.onrender.com/api";
+};
+
 const API = axios.create({
-  baseURL: "https://updatedsocial.onrender.com/api",
+  baseURL: getBaseURL(),
   headers: {
     "userid": getUserId()
   }
