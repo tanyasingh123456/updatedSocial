@@ -13,15 +13,34 @@ connectDB();
 
 app.use(express.json());
 
-// CORS configuration - allow any localhost port for development
+// CORS configuration for development and production
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://localhost:3000',
+  'https://updated-social.vercel.app/', // For production
+];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow localhost on any port for development
-    if (!origin || origin.startsWith('http://localhost')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow requests without origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
     }
+    
+    // Allow localhost on any port for development
+    if (origin.startsWith('http://localhost')) {
+      return callback(null, true);
+    }
+    
+    // Allow production URL from environment
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true

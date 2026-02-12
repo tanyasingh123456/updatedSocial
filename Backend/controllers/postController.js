@@ -21,7 +21,8 @@ exports.createPost = async (req, res) => {
 
     res.status(201).json(post);
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error creating post:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
@@ -45,7 +46,7 @@ exports.getPosts = async (req, res) => {
 
       likeMap[postId] = (likeMap[postId] || 0) + 1;
 
-      if (like.user.toString() === userId) {
+      if (like.user === userId) {
         userLikedSet.add(postId);
       }
     });
@@ -59,6 +60,7 @@ exports.getPosts = async (req, res) => {
     res.json(formattedPosts);
 
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
