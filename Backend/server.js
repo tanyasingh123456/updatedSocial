@@ -14,20 +14,24 @@ connectDB();
 
 app.use(express.json());
 
+const normalizeOrigin = (origin) => origin.replace(/\/$/, "");
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:5176', // This is the one you are currently using!
   'https://updated-social.vercel.app/' // Replace with your actual Vercel link
-];
+].map(normalizeOrigin);
 
 app.use(cors({
   origin: function (origin, callback) {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
+
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -55,6 +59,26 @@ app.use((req, res, next) => {
 
 app.use("/api/posts", postRoutes);
 app.use("/api/posts", likeRoutes);
+
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", {
+    method: req.method,
+    path: req.originalUrl,
+    origin: req.headers.origin,
+    userId: req.headers.userid,
+    message: err?.message,
+    stack: err?.stack
+  });
+
+  if (err && err.message === "Not allowed by CORS") {
+    return res.status(403).json({ message: err.message });
+  }
+
+  return res.status(500).json({
+    message: "Server Error",
+    error: err?.message || "Unknown error"
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 

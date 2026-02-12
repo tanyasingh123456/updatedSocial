@@ -25,7 +25,7 @@ function PostForm({ onAddPost }) {
 
       setContent("");
     } catch (error) {
-      console.log(error);
+      console.log("Create post failed:", error.response?.status, error.response?.data || error.message);
     } finally {
       setLoading(false);
     }

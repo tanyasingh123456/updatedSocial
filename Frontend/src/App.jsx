@@ -14,7 +14,11 @@ function App() {
       const res = await API.get("/posts");
       setPosts(res.data);
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error(
+        "Error fetching posts:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
     }
   };
 
@@ -80,7 +84,11 @@ function App() {
         )
       );
     } catch (error) {
-      console.error("Error toggling like:", error);
+      console.error(
+        "Error toggling like:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
       // Revert optimistic update on error
       setPosts((prevPosts) =>
         prevPosts.map((p) =>
