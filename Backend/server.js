@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 
 const postRoutes = require("./routes/postRoutes");
@@ -48,6 +49,17 @@ app.use(cors({
 
 app.use((req, res, next) => {
   req.userId = req.headers.userid;
+  next();
+});
+
+// Middleware to check database connection
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ 
+      message: "Database connection error",
+      status: mongoose.connection.readyState 
+    });
+  }
   next();
 });
 
