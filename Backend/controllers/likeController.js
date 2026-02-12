@@ -14,17 +14,24 @@ exports.toggleLike = async (req, res) => {
       post: postId
     });
 
+    let liked = false;
     if (existingLike) {
       await existingLike.deleteOne();
-      return res.json({ liked: false });
+    } else {
+      await Like.create({
+        user: userId,
+        post: postId
+      });
+      liked = true;
     }
 
-    await Like.create({
-      user: userId,
-      post: postId
-    });
+    // Get updated like count
+    const likeCount = await Like.countDocuments({ post: postId });
 
-    return res.json({ liked: true });
+    return res.json({ 
+      liked, 
+      likeCount 
+    });
 
   } catch (error) {
     res.status(500).json({ message: "Server Error" });

@@ -13,15 +13,19 @@ connectDB();
 
 app.use(express.json());
 
-// app.use(cors({
-//   origin: process.env.FRONTEND_URL
-// }));
-
+// CORS configuration - allow any localhost port for development
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow your local frontend
+  origin: (origin, callback) => {
+    // Allow localhost on any port for development
+    if (!origin || origin.startsWith('http://localhost')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
-}))
+}));
 
 app.use((req, res, next) => {
   req.userId = req.headers.userid;
